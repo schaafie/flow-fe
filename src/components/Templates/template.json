@@ -6,7 +6,30 @@
     "description": "",
     "owner": "",
     "creator": "",
-    "data": [],
+    "canstart": [],
+    "data": [
+      {
+        "id": "",
+        "name": "",
+        "type": "",
+        "default": "",
+        "value": "",
+      },
+      {
+        "id": "",
+        "name": "",
+        "type": "",
+        "default": "",
+        "value": "",
+      },
+      {
+        "id": "",
+        "name": "",
+        "type": "",
+        "default": "",
+        "value": "",
+      }
+    ],
     "flow":
     {
       "terminators":
@@ -51,7 +74,7 @@
           { "connection":
             {
               "id": 0,
-              "from": 0, 
+              "from": 0,
               "to": 1
             }
           },
