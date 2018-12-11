@@ -1,0 +1,68 @@
+{
+  "flow":
+  {
+    "name": "",
+    "Version": "0.1",
+    "description": "",
+    "owner": "",
+    "creator": "",
+    "data": [],
+    "flow":
+    {
+      "terminators":
+        [
+          { "state":
+            {
+              "id": 0,
+              "type": "start",
+              "name": "start",
+              "location": { "x": 200, "y": 100 }
+            }
+          },
+          { "state":
+            {
+              "id": -1,
+              "type": "end",
+              "name": "end",
+              "location": { "x": 200, "y": 300 }
+            }
+          }
+        ],
+      "states":
+        [
+          { "state":
+            {
+              "id": 1,
+              "name": "step1",
+              "defaultvalue": "",
+              "cando": "",
+              "type": "action",
+              "actor": "",
+              "location": { "x": 200, "y": 200 },
+              "input": "AND",
+              "output": "XOR",
+              "timed": true,
+              "manual": false
+            }
+          }
+        ],
+      "connections":
+        [
+          { "connection":
+            {
+              "id": 0,
+              "from": 0, 
+              "to": 1
+            }
+          },
+          { "connection":
+            {
+              "id": 1,
+              "from": 1,
+              "to": -1
+            }
+          }
+        ]
+    }
+  }
+}
