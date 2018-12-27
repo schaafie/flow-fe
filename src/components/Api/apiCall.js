@@ -35,7 +35,6 @@ const apiCall = {
         'Authorization': 'Bearer '+ basicAuth.jwt
       }
     }).then((response) => {
-      console.log(response);
       callback( true, response.data.data );
     }).catch((error) => {
       console.log(error);
@@ -54,7 +53,6 @@ const apiCall = {
         'Authorization': 'Bearer '+ basicAuth.jwt
       }
     }).then((response) => {
-      console.log(response);
       callback( true, response.data.data );
     }).catch((error) => {
       console.log(error);
@@ -75,7 +73,6 @@ const apiCall = {
         'Authorization': 'Bearer '+ basicAuth.jwt
       }
     }).then((response) => {
-      console.log(response);
       callback( true, response.data.data );
     }).catch((error) => {
       console.log(error);
@@ -94,7 +91,6 @@ const apiCall = {
         'Authorization': 'Bearer '+ basicAuth.jwt
       }
     }).then((response) => {
-      console.log(response);
       callback( true );
     }).catch((error) => {
       console.log(error);

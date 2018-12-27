@@ -16,7 +16,9 @@ import VisibilityOff from "@material-ui/icons/VisibilityOff";
 import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import FlowDefinition from "./flowDefinition";
+import FlowDefinition from "./flowdefinition";
+import FlowAuth from './flowauth.js';
+import FlowData from './flowdata.js';
 import templatejson from './template.json';
 
 const styles = theme => ({
@@ -62,14 +64,13 @@ class Template extends Component {
       templateid: '',
       name: '',
       version: '0.1',
-      can_start: '',
+      can_start: {users:[],roles:[]},
       current: false,
       flowstates: templatejson.flow.flow,
-      flowdata: templatejson.flow.data
+      flowdata: templatejson.flow.data,
+      applications: []
     };
   }
-
-  add
 
   handleChange = prop => event => {
     this.setState({ [prop]: event.target.value });
@@ -81,7 +82,7 @@ class Template extends Component {
 
   handleOnSubmit = e => {
     e.preventDefault();
-    const { templateid, name, version, description, can_start, current, definition } = this.state;
+    const { templateid, name, version, description, can_start, current, flowstates, flowdata } = this.state;
 
     let data = {
       template: {
@@ -90,7 +91,7 @@ class Template extends Component {
         description: description,
         can_start: can_start,
         current: current,
-        definition: definition
+        definition: { data: flowdata, flow: flowstates }
       }
     };
 
@@ -109,6 +110,86 @@ class Template extends Component {
     }
   }
 
+  persistStates(flow) {
+    this.setState({flowstates: flow});
+  }
+
+  updateList(list,id) {
+    let index = list.indexOf(id);
+    if (index===-1) {
+      list.push(id);
+      return list;
+    }
+    list.splice(index,1);
+    return list;
+  }
+
+  flipAuth(type, id) {
+    switch(type) {
+      case 'users':
+        this.setState({ can_start: {
+          users: this.updateList(this.state.can_start.users,id),
+          roles: this.state.can_start.roles
+        }});
+        break;
+      case 'roles':
+        this.setState({ can_start: {
+          users: this.state.can_start.users,
+          roles: this.updateList(this.state.can_start.roles,id)
+        }});
+        break;
+    }
+  }
+
+  addData(name, type, format, def) {
+    let data = this.state.flowdata;
+    let maxId = 0;
+    data.forEach(function(item){ if (item.id>maxId) {maxId=item.id} })
+    data.push({
+      id: maxId+1,
+      name: name,
+      type: type,
+      format: format,
+      default: def
+    });
+
+    this.setState({flowdata: data});
+  }
+
+  removeData(dataid) {
+    let data = this.state.flowdata;
+    data.map((item,index) => {
+      if(item.id===dataid) {
+        data.splice(index,1);
+        return true;
+      }
+    })
+    this.setState({flowdata: data});
+  }
+
+  changeData(id, name, type, format, def) {
+    let data = this.state.flowdata;
+    data.map((item,index) => {
+      if(item.id===id) {
+        data[index].name = name;
+        data[index].type = type;
+        data[index].format = format;
+        data[index].default = def;
+        return true;
+      }
+    });
+    this.setState({flowdata: data});
+  }
+
+  addFlowData() {
+    let data = this.state.flowdata;
+    this.setState({flowdata: data});
+  }
+
+  setApplication(itemId, appId) {
+    // loop items and add app
+  }
+
   handleGetItem(result, data) {
     if (result) {
       this.setState({
@@ -118,20 +199,19 @@ class Template extends Component {
         description: data.description,
         can_start: data.can_start,
         current: data.current,
-        flowstates: data.definition.flow.flow,
-        flowdata: data.definition.flow.data
+        definiton: { data: data.data, flow: data.flow }
       });
     } else {
       // Handle error
     }
   }
 
-  persistStates(flow) {
-    this.setState({flowstates: flow});
-  }
-
-  persistData(data) {
-    this.setState({flowdata: data});
+  handleGetApps( result, data ) {
+    if (result) {
+      this.setState({ applications: data })
+    } else {
+        // Handle error
+    }
   }
 
   getData(id) {
@@ -142,6 +222,7 @@ class Template extends Component {
     if (this.props.match.params.id) {
       this.getData(this.props.match.params.id);
     }
+    apiCall.getlist( '/applications', this.handleGetApps.bind(this) );
   }
 
   render() {
@@ -164,37 +245,60 @@ class Template extends Component {
            </AppBar>
            {tabValue === "G" &&
              <TabContainer>
-               <TextField id="name" label="name" fullWidth margin="normal" variant="outlined"
-                 className={classes.textField} value={this.state.name} onChange={this.handleChange("name")}
-               />
-               <TextField id="version" label="version" margin="normal" variant="outlined"
-                 className={classes.textField} value={this.state.version} InputProps={{ readOnly: true }}
-               />
-               <TextField id="description" multiline label="description" fullWidth margin="normal" variant="outlined"
-                 className={classes.textField} value={this.state.description} onChange={this.handleChange("description")}
-               />
+               <Grid container spacing={Number(24)}>
+                 <Grid item xs={8}>
+                   <TextField id="name" label="name" fullWidth margin="normal" variant="outlined"
+                     className={classes.textField} value={this.state.name} onChange={this.handleChange("name")}
+                   />
+                 </Grid>
+                 <Grid item xs={4}>
+                   <TextField id="version" label="version" fullWidth margin="normal" variant="outlined"
+                     className={classes.textField} value={this.state.version} InputProps={{ readOnly: true }}
+                   />
+                 </Grid>
+                 <Grid item xs={12}>
+                   <TextField id="description" multiline label="description" fullWidth margin="normal" variant="outlined"
+                     className={classes.textField} value={this.state.description} onChange={this.handleChange("description")}
+                   />
+                 </Grid>
+               </Grid>
              </TabContainer>}
            {tabValue === "A" &&
              <TabContainer>
-              Authorisation
+               <Grid container>
+                 <FlowAuth
+                   flowauth={this.state.can_start}
+                   flipAuth={this.flipAuth.bind(this)}
+                  />
+               </Grid>
              </TabContainer>}
              {tabValue === "D" &&
                <TabContainer>
-                Data
+                 <Grid container>
+                   <FlowData
+                     flowdata={this.state.flowdata}
+                     addData={this.addData.bind(this)}
+                     removeData={this.removeData.bind(this)}
+                     changeData={this.changeData.bind(this)}
+                    />
+                 </Grid>
                </TabContainer>}
            {tabValue === "F" &&
              <TabContainer>
                <Grid container>
                  <FlowDefinition
                    flowstates={this.state.flowstates}
-                   persistStates={this.persistStates.bind(this)}
                    flowdata={this.state.flowdata}
-                   persistData={this.persistData.bind(this)}/>
+                   applications={this.state.applications}
+                   setApplication={this.setApplication.bind(this)}
+                   addData={this.addFlowData.bind(this)}
+                   persistStates={this.persistStates.bind(this)}
+                  />
                </Grid>
              </TabContainer>}
           <Grid container justify="flex-end">
             <Button variant="contained" aria-label="Add" color="primary" className={classes.button} onClick={this.handleOnSubmit} >
-              Save
+              Save definition
             </Button>
           </Grid>
         </Paper>

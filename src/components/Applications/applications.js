@@ -51,7 +51,7 @@ const styles = theme => ({
 
 // Class Part
 
-class Roles extends Component {
+class Applications extends Component {
   constructor() {
     super();
     this.state = {
@@ -60,7 +60,7 @@ class Roles extends Component {
   }
 
   getItems() {
-    apiCall.getlist( '/roles', this.handleGetItems.bind(this) );
+    apiCall.getlist( '/applications', this.handleGetItems.bind(this) );
   }
 
   handleGetItems( result, data ) {
@@ -75,8 +75,8 @@ class Roles extends Component {
     this.getItems(this);
   }
 
-  deleteRole = item => event => {
-    apiCall.delete( item.id, '/roles/', this.handleDelete.bind(this) );
+  deleteItem = item => event => {
+    apiCall.delete( item.id, '/applications/', this.handleDelete.bind(this) );
   }
 
   handleDelete( result, data ) {
@@ -87,12 +87,12 @@ class Roles extends Component {
     }
   }
 
-  editRole = item => event => {
-    this.props.history.push('/roles/'+item.id);
+  editItem = item => event => {
+    this.props.history.push('/applications/'+item.id);
   }
 
-  addRole = () => {
-    this.props.history.push('/role');
+  addItem = () => {
+    this.props.history.push('/application');
   }
 
   render() {
@@ -104,7 +104,8 @@ class Roles extends Component {
           <TableHead>
             <TableRow>
               <CustomTableCell>Id</CustomTableCell>
-              <CustomTableCell>Role name</CustomTableCell>
+              <CustomTableCell>Application</CustomTableCell>
+              <CustomTableCell>Version</CustomTableCell>
               <CustomTableCell>Actions</CustomTableCell>
             </TableRow>
           </TableHead>
@@ -118,10 +119,13 @@ class Roles extends Component {
                   {item.name}
                 </CustomTableCell>
                 <CustomTableCell>
-                  <IconButton aria-label="edit role" className={classes.button} onClick={this.editRole(item)}>
+                  {item.version}
+                </CustomTableCell>
+                <CustomTableCell>
+                  <IconButton aria-label="edit application" className={classes.button} onClick={this.editItem(item)}>
                     <CreateIcon />
                   </IconButton>
-                  <IconButton aria-label="Delete" className={classes.button} onClick={this.deleteRole(item)}>
+                  <IconButton aria-label="Delete" className={classes.button} onClick={this.deleteItem(item)}>
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </CustomTableCell>
@@ -130,8 +134,8 @@ class Roles extends Component {
           </TableBody>
         </Table>
         <Grid container justify="flex-end">
-          <Button variant="contained" aria-label="Add" color="primary" className={classes.extendedButton} onClick={this.addRole} >
-            <AddIcon /> Add Role
+          <Button variant="contained" aria-label="Add" color="primary" className={classes.extendedButton} onClick={this.addItem} >
+            <AddIcon /> Add Application
           </Button>
         </Grid>
       </Paper>
@@ -139,8 +143,8 @@ class Roles extends Component {
   }
 }
 
-Roles.propTypes = {
+Applications.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Roles);
+export default withStyles(styles)(Applications);

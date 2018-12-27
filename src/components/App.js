@@ -31,6 +31,8 @@ import Actions from './Actions/actions.js';
 import Action from './Actions/action.js';
 import Templates from './Templates/templates.js';
 import Template from './Templates/template.js';
+import Applications from './Applications/applications.js';
+import Application from './Applications/application.js';
 // -----------------------
 // CSS The Material-UI way
 // -----------------------
@@ -150,6 +152,9 @@ class App extends React.Component {
                   <PrivateRoute path="/templates/:id" component={Template} />
                   <PrivateRoute path="/templates" component={Templates} />
                   <PrivateRoute path="/template" component={Template} />
+                  <PrivateRoute path="/applications/:id" component={Application} />
+                  <PrivateRoute path="/applications" component={Applications} />
+                  <PrivateRoute path="/application" component={Application} />
                   <PrivateRoute path="/signout" component={Login} />
                   <Route path="/" component={Main} />
                 </Switch>

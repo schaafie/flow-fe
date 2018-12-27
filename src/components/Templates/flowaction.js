@@ -72,7 +72,7 @@ class FlowAction extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tabValue: "G"
+      tabValue: "Ge"
     };
   }
 
@@ -93,6 +93,10 @@ class FlowAction extends Component {
   handleTabChange = (event, value) => {
     this.setState({ tabValue: value });
   };
+
+  setApplication = () => event => {
+    this.props.setApplication(this.props.item.state.id, event.target.value);
+  }
 
   getDestinations( origin_id, direction, conn_id) {
     let list = [];
@@ -128,7 +132,7 @@ class FlowAction extends Component {
   }
 
   render() {
-    const { classes, theme, item, connections } = this.props;
+    const { classes, theme, item, connections, applications } = this.props;
     const { tabValue } = this.state;
 
     return (
@@ -140,12 +144,12 @@ class FlowAction extends Component {
         <div>
           <AppBar position="static" color="default">
             <Tabs value={tabValue} onChange={this.handleTabChange}>
-              <Tab value="G" label="Action" />
-              <Tab value="A" label="Auth" />
-              <Tab value="D" label="Data" />
+              <Tab value="Ge" label="General" />
+              <Tab value="Au" label="Auth" />
+              <Tab value="Ac" label="Action" />
             </Tabs>
           </AppBar>
-          {tabValue === "G" &&
+          {tabValue === "Ge" &&
           <TabContainer>
             <Grid container>
               <Grid item xs={12}>
@@ -289,13 +293,28 @@ class FlowAction extends Component {
               </Grid>
             </Grid>
           </TabContainer>}
-          {tabValue === "A" &&
+          {tabValue === "Au" &&
           <TabContainer>
             Authorisation
           </TabContainer>}
-          {tabValue === "D" &&
+          {tabValue === "Ac" &&
           <TabContainer>
-            Data
+            <Grid container>
+              <Grid item xs={12}>
+                <Select className={classes.select}
+                  inputProps={{ name: 'application', id: 'application', }}
+                  value="{item.state.application}" onChange={this.setApplication} >
+                  {applications.map((app,index) => (
+                  <MenuItem value={app.id} key={index}>{app.name + " - " + app.version}</MenuItem>
+                  ))}
+                </Select>
+              </Grid>
+              {item.state.application!=='' &&
+              <Grid item xs={12}>
+                loop data
+              </Grid>
+              }
+            </Grid>
           </TabContainer>}
         </div>
       }

@@ -18,6 +18,7 @@ import InboxIcon from "@material-ui/icons/MoveToInbox";
 import GroupIcon from "@material-ui/icons/Group";
 import RoleIcon from "@material-ui/icons/HowToReg";
 import ActionIcon from "@material-ui/icons/Security";
+import ApplicationIcon from "@material-ui/icons/WebAsset";
 
 import basicAuth from '../Auth/basicAuth.js';
 import LogoutLink from '../Auth/logout.js';
@@ -82,6 +83,12 @@ class Mainmenu extends Component {
               </ExpansionPanelSummary>
               <ExpansionPanelDetails>
                 <List>
+                  <ListItem button key="applications" component={Link} to="/applications">
+                    <ListItemIcon>
+                      <ApplicationIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Applications" />
+                  </ListItem>
                   <ListItem button key="templates" component={Link} to="/templates">
                     <ListItemIcon>
                       <GroupIcon />

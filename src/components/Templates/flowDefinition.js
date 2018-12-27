@@ -38,8 +38,13 @@ class FlowDefinition extends Component {
       addTerminator: this.addTerminator.bind(this),
       addConnection: this.addConnection.bind(this),
       changeConnection: this.changeConnection.bind(this),
-      removeConnection: this.removeConnection.bind(this)
+      removeConnection: this.removeConnection.bind(this),
+      setApplication: this.setApplication.bind(this)
     };
+  }
+
+  setApplication(itemid,appid) {
+    this.props.setApplication(itemid, appid);
   }
 
   persistStates() {
@@ -182,7 +187,7 @@ class FlowDefinition extends Component {
   }
 
   render() {
-    const { classes, flowstates, flowdata } = this.props;
+    const { classes, flowstates, flowdata, applications } = this.props;
     const destinations = this.getDestinations();
 
     return(
@@ -226,6 +231,8 @@ class FlowDefinition extends Component {
                 item = {this.state.selectedObject}
                 connections = {flowstates.connections}
                 destinations = {destinations}
+                applications = {applications}
+                setApplication = {this.state.setApplication}
                 updateObject = {this.state.updateObject}
                 addConnection = {this.state.addConnection}
                 changeConnection = {this.state.changeConnection}
