@@ -1,0 +1,11 @@
+{
+  "state": {
+    "id": 0, 
+    "type": "end",
+    "name": "new end",
+    "location": {
+      "x": 100,
+      "y": 100
+    }
+  }
+}

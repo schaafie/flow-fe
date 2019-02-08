@@ -1,7 +1,24 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { setTemplateObject, changeTemplateObject,
+         changeTemplateTerminator } from '../../redux/actions.js';
 import PropTypes from "prop-types";
 import Konva from 'konva';
-import { Stage, Layer, Group, Rect, Line, Text, Circle, Ellipse, Arrow } from 'react-konva';
+import { Stage, Layer, Group, Rect, Line,
+  Text, Circle, Ellipse, Arrow } from 'react-konva';
+
+const mapStateToProps = state => {
+  return {
+    states: state.template.current.flow.states,
+    terminators: state.template.current.flow.terminators,
+    connections: state.template.current.flow.connections
+  };
+}
+
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({ setTemplateObject, changeTemplateObject }, dispatch);
+}
 
 class FlowView extends Component {
 
@@ -20,7 +37,7 @@ class FlowView extends Component {
   }
 
   selectObject(event, item) {
-    this.props.selectObject(item);
+    this.props.setTemplateObject(item.state.id);
   }
 
   dragObject(event, object) {
@@ -32,10 +49,12 @@ class FlowView extends Component {
   }
 
   dragEndObject(event, object) {
-    this.props.updateObject(
-      object,
-      "delta",
+    this.props.changeTemplateObject(
+      object.state.id,
+      "location",
       {
+        x:object.state.location.x,
+        y:object.state.location.y,
         dx:this.state.dx,
         dy:this.state.dy
       }
@@ -52,7 +71,7 @@ class FlowView extends Component {
     let sy = 0;
     let ex = 0;
     let ey = 0;
-    let items = this.props.flowactions.concat(this.props.terminators);
+    let items = this.props.states.concat(this.props.terminators);
     items.forEach( function(item) {
       if (conn_item.connection.from === item.state.id) {
         sx = item.state.location.x;
@@ -82,14 +101,12 @@ class FlowView extends Component {
 
   render() {
     const s=1;
-    const flowactions = this.props.flowactions;
-    const flowterminators = this.props.terminators;
-    const flowconnections = this.props.connections;
+    const { states, terminators, connections } = this.props;
 
     return (
       <Stage width={this.state.width} height={this.state.height}>
         <Layer>
-        {flowterminators.map((item,key) => (
+        {terminators.map((item,key) => (
           <Group draggable
               key={key}
               onDragMove={(event)=>this.dragObject(event,item)}
@@ -109,7 +126,7 @@ class FlowView extends Component {
                   fontSize={12} />
           </Group>
         ))}
-        {flowactions.map((item,key) => (
+        {states.map((item,key) => (
           <Group
             draggable
             key={key}
@@ -196,7 +213,7 @@ class FlowView extends Component {
 
           </Group>
         ))}
-        {flowconnections.map((item,key) => (
+        {connections.map((item,key) => (
           <Arrow
             key={key}
             points={this.getPoints(item)}
@@ -214,4 +231,4 @@ class FlowView extends Component {
 FlowView.propTypes = {
 };
 
-export default FlowView;
+export default connect(mapStateToProps,mapDispatchToProps)(FlowView);

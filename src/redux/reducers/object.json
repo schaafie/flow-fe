@@ -1,0 +1,19 @@
+{
+  "state":
+  {
+    "id": 0,
+    "name": "new",
+    "defaultvalue": "",
+    "cando": "",
+    "type": "action",
+    "actor": "",
+    "location": {
+      "x": 100,
+      "y": 100
+    },
+    "input": "",
+    "output": "",
+    "timed": false,
+    "manual": false 
+  }
+}

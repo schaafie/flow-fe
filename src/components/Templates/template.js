@@ -1,4 +1,8 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { newTemplate, openTemplate, saveTemplate, changeTemplateGen } from '../../redux/actions.js';
+
 import apiCall from "../Api/apiCall.js";
 import classNames from "classnames";
 import PropTypes from "prop-types";
@@ -19,7 +23,17 @@ import Tab from '@material-ui/core/Tab';
 import FlowDefinition from "./flowdefinition";
 import FlowAuth from './flowauth.js';
 import FlowData from './flowdata.js';
-import templatejson from './template.json';
+
+const mapStateToProps = state => {
+  return {
+    template: state.template.current,
+    currentState: state.template.currentState
+  };
+}
+
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({newTemplate, openTemplate, saveTemplate, changeTemplateGen}, dispatch);
+}
 
 const styles = theme => ({
   textField: {
@@ -60,45 +74,26 @@ class Template extends Component {
   constructor() {
     super();
     this.state = {
+      templateid: "",
       tabValue: "G",
-      templateid: '',
-      name: '',
-      version: '0.1',
-      can_start: {users:[],roles:[]},
-      current: false,
-      flowstates: templatejson.flow.flow,
-      flowdata: templatejson.flow.data,
-      applications: []
+      applications: [],
     };
   }
-
-  handleChange = prop => event => {
-    this.setState({ [prop]: event.target.value });
-  };
 
   handleTabChange = (event, value) => {
     this.setState({ tabValue: value });
   };
 
+  handleChange = prop => event => {
+    this.props.changeTemplateGen(prop, event.target.value);
+  };
+
   handleOnSubmit = e => {
     e.preventDefault();
-    const { templateid, name, version, description, can_start, current, flowstates, flowdata } = this.state;
-
-    let data = {
-      template: {
-        name: name,
-        version: version,
-        description: description,
-        can_start: can_start,
-        current: current,
-        definition: { data: flowdata, flow: flowstates }
-      }
-    };
-
-    if (templateid!=='') {
-      apiCall.update( '/templates/', templateid, data, this.handleUpdate.bind(this) );
+    if (this.props.match.params.id!=='') {
+      apiCall.update( '/templates/', this.props.match.params.id, this.props.template, this.handleUpdate.bind(this) );
     } else {
-      apiCall.create('/templates', data, this.handleUpdate.bind(this) );
+      apiCall.create('/templates', this.props.template, this.handleUpdate.bind(this) );
     }
   }
 
@@ -110,123 +105,16 @@ class Template extends Component {
     }
   }
 
-  persistStates(flow) {
-    this.setState({flowstates: flow});
-  }
-
-  updateList(list,id) {
-    let index = list.indexOf(id);
-    if (index===-1) {
-      list.push(id);
-      return list;
-    }
-    list.splice(index,1);
-    return list;
-  }
-
-  flipAuth(type, id) {
-    switch(type) {
-      case 'users':
-        this.setState({ can_start: {
-          users: this.updateList(this.state.can_start.users,id),
-          roles: this.state.can_start.roles
-        }});
-        break;
-      case 'roles':
-        this.setState({ can_start: {
-          users: this.state.can_start.users,
-          roles: this.updateList(this.state.can_start.roles,id)
-        }});
-        break;
-    }
-  }
-
-  addData(name, type, format, def) {
-    let data = this.state.flowdata;
-    let maxId = 0;
-    data.forEach(function(item){ if (item.id>maxId) {maxId=item.id} })
-    data.push({
-      id: maxId+1,
-      name: name,
-      type: type,
-      format: format,
-      default: def
-    });
-
-    this.setState({flowdata: data});
-  }
-
-  removeData(dataid) {
-    let data = this.state.flowdata;
-    data.map((item,index) => {
-      if(item.id===dataid) {
-        data.splice(index,1);
-        return true;
-      }
-    })
-    this.setState({flowdata: data});
-  }
-
-  changeData(id, name, type, format, def) {
-    let data = this.state.flowdata;
-    data.map((item,index) => {
-      if(item.id===id) {
-        data[index].name = name;
-        data[index].type = type;
-        data[index].format = format;
-        data[index].default = def;
-        return true;
-      }
-    });
-    this.setState({flowdata: data});
-  }
-
-  addFlowData() {
-    let data = this.state.flowdata;
-    this.setState({flowdata: data});
-  }
-
-  setApplication(itemId, appId) {
-    // loop items and add app
-  }
-
-  handleGetItem(result, data) {
-    if (result) {
-      this.setState({
-        templateid: data.id,
-        name: data.name,
-        version: data.version,
-        description: data.description,
-        can_start: data.can_start,
-        current: data.current,
-        definiton: { data: data.data, flow: data.flow }
-      });
-    } else {
-      // Handle error
-    }
-  }
-
-  handleGetApps( result, data ) {
-    if (result) {
-      this.setState({ applications: data })
-    } else {
-        // Handle error
-    }
-  }
-
-  getData(id) {
-    apiCall.getItem( '/templates/', id, this.handleGetItem.bind(this) );
-  }
-
   componentWillMount() {
     if (this.props.match.params.id) {
-      this.getData(this.props.match.params.id);
+      this.props.openTemplate(this.props.match.params.id);
+    } else {
+      this.props.newTemplate();
     }
-    apiCall.getlist( '/applications', this.handleGetApps.bind(this) );
   }
 
   render() {
-    const { classes, theme } = this.props;
+    const { classes, theme, template, currentState } = this.props;
     const { tabValue } = this.state;
 
     return (
@@ -248,17 +136,17 @@ class Template extends Component {
                <Grid container spacing={Number(24)}>
                  <Grid item xs={8}>
                    <TextField id="name" label="name" fullWidth margin="normal" variant="outlined"
-                     className={classes.textField} value={this.state.name} onChange={this.handleChange("name")}
+                     className={classes.textField} value={template.name} onChange={this.handleChange("name")}
                    />
                  </Grid>
                  <Grid item xs={4}>
                    <TextField id="version" label="version" fullWidth margin="normal" variant="outlined"
-                     className={classes.textField} value={this.state.version} InputProps={{ readOnly: true }}
+                     className={classes.textField} value={template.version} InputProps={{ readOnly: true }}
                    />
                  </Grid>
                  <Grid item xs={12}>
                    <TextField id="description" multiline label="description" fullWidth margin="normal" variant="outlined"
-                     className={classes.textField} value={this.state.description} onChange={this.handleChange("description")}
+                     className={classes.textField} value={template.description} onChange={this.handleChange("description")}
                    />
                  </Grid>
                </Grid>
@@ -266,34 +154,21 @@ class Template extends Component {
            {tabValue === "A" &&
              <TabContainer>
                <Grid container>
-                 <FlowAuth
-                   flowauth={this.state.can_start}
-                   flipAuth={this.flipAuth.bind(this)}
-                  />
+                 <FlowAuth flowauth={template.canstart} />
                </Grid>
              </TabContainer>}
              {tabValue === "D" &&
                <TabContainer>
                  <Grid container>
-                   <FlowData
-                     flowdata={this.state.flowdata}
-                     addData={this.addData.bind(this)}
-                     removeData={this.removeData.bind(this)}
-                     changeData={this.changeData.bind(this)}
-                    />
+                   <FlowData flowdata={template.data} />
                  </Grid>
                </TabContainer>}
            {tabValue === "F" &&
              <TabContainer>
                <Grid container>
                  <FlowDefinition
-                   flowstates={this.state.flowstates}
-                   flowdata={this.state.flowdata}
-                   applications={this.state.applications}
-                   setApplication={this.setApplication.bind(this)}
-                   addData={this.addFlowData.bind(this)}
-                   persistStates={this.persistStates.bind(this)}
-                  />
+                  currentState={currentState}
+                  flowTemplate={template} />
                </Grid>
              </TabContainer>}
           <Grid container justify="flex-end">
@@ -311,4 +186,4 @@ Template.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Template);
+export default withStyles(styles)(connect(mapStateToProps,mapDispatchToProps)(Template));

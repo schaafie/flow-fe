@@ -22,11 +22,11 @@ const basicAuth = {
       this.jwt = response.data.jwt;
       this.loggedInUser = username;
       this.isAuthenticated = true;
-      cb();
+      cb(false);
     }).catch((error) => {
       console.log(error);
       this.isAuthenticated = false;
-      cb();
+      cb(error.message);
     });
   },
   signout(cb) {

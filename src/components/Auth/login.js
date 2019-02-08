@@ -18,6 +18,12 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 // Additional objects
 import basicAuth from "./basicAuth.js";
 
+const styles = theme => ({
+  errorTextField: {
+    color: 'red'
+  },
+});
+
 class Login extends Component {
 
   constructor() {
@@ -27,6 +33,7 @@ class Login extends Component {
       redirectToReferrer: false,
       login: '',
       password: '',
+      error: false,
       showPassword: false,
     };
   };
@@ -34,8 +41,8 @@ class Login extends Component {
   handleOnSubmit = e => {
     e.preventDefault();
     const { login, password } = this.state;
-    basicAuth.authenticate( login, password, () => {
-      this.setState({ redirectToReferrer: true });
+    basicAuth.authenticate( login, password, (err) => {
+      this.setState({ redirectToReferrer: true, error: err });
     });
   }
 
@@ -47,40 +54,54 @@ class Login extends Component {
     this.setState({ showPassword: !this.state.showPassword });
   };
 
+  handleKeyPress = event => {
+    if (event.charCode == 10 || event.charCode == 13) {
+      this.handleOnSubmit(event);
+    }
+  }
+
   render() {
+    const { classes, theme } = this.props;
 
     return (
       <Dialog open={!basicAuth.isAuthenticated} aria-labelledby="form-dialog-title">
         <DialogTitle id="form-dialog-title">Login</DialogTitle>
         <DialogContent>
-        <DialogContentText>
-          To use the application, please login.
-        </DialogContentText>
-        <TextField id="login" type="text" label="Login" fullWidth
-          value={this.state.login}
-          onChange={this.handleChange("login")} />
-        <TextField id="password" label="Password" fullWidth
-          type={this.state.showPassword ? "text" : "password"}
-          value={this.state.password}
-          onChange={this.handleChange("password")}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment variant="filled" position="end">
-              <IconButton aria-label="Toggle password visibility"
-                onClick={this.handleClickShowPassword}>
-              {this.state.showPassword ? (
-                <VisibilityOff />
-              ) : (
-                <Visibility />
-              )}
-              </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
+          <DialogContentText>
+            To use the application, please login.
+          </DialogContentText>
+          {this.state.error!==false && (
+            <DialogContentText className={classes.errorTextField} >
+              {this.state.error}
+            </DialogContentText>
+          )}
+          <TextField id="login" type="text" label="Login" fullWidth
+            value={this.state.login}
+            onChange={this.handleChange("login")}
+            onKeyPress={this.handleKeyPress} />
+          <TextField id="password" label="Password" fullWidth
+            type={this.state.showPassword ? "text" : "password"}
+            value={this.state.password}
+            onChange={this.handleChange("password")}
+            onKeyPress={this.handleKeyPress}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment variant="filled" position="end">
+                <IconButton aria-label="Toggle password visibility"
+                  onClick={this.handleClickShowPassword}>
+                {this.state.showPassword ? (
+                  <VisibilityOff />
+                ) : (
+                  <Visibility />
+                )}
+                </IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
         </DialogContent>
         <DialogActions>
-          <Button onClick={this.handleOnSubmit} color="primary">
+          <Button color="primary" onClick={this.handleOnSubmit} >
             Login
           </Button>
         </DialogActions>
@@ -89,4 +110,4 @@ class Login extends Component {
   }
 }
 
-export default Login;
+export default withStyles(styles)(Login);

@@ -1,4 +1,8 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { addData, changeData, deleteData } from '../../redux/actions.js';
+
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
@@ -21,6 +25,10 @@ import CancelIcon from "@material-ui/icons/Cancel";
 import DeleteIcon from "@material-ui/icons/Delete";
 import EditIcon from "@material-ui/icons/Edit";
 import SaveIcon from "@material-ui/icons/Save";
+
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({addData, deleteData, changeData}, dispatch);
+}
 
 // CSS + Styles Part
 const CustomTableCell = withStyles(theme => ({
@@ -128,11 +136,11 @@ class FlowData extends Component {
 
   handleDelete = id => event => {
     event.preventDefault();
-    this.props.removeData(id);
+    this.props.deleteData(id);
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, flowdata } = this.props;
 
     return (
         <Table className={classes.table}>
@@ -146,7 +154,7 @@ class FlowData extends Component {
             </TableRow>
           </TableHead>
           <TableBody>
-            {this.props.flowdata.map((item,key) => {
+            {flowdata.map((item,key) => {
               return (item.id!==this.state.edit_id) ?
               <TableRow className={classes.row} key={key}>
                 <CustomTableCell>{item.name}</CustomTableCell>
@@ -175,7 +183,7 @@ class FlowData extends Component {
                   <FormControl variant="outlined" className={classes.formControl}>
                     <Select native value={this.state.edit_type}
                       onChange={this.handleChange('edit_type')}
-                      input={<OutlinedInput name="edit_type" id="edit_type" />} >
+                      input={<OutlinedInput labelWidth={200} name="edit_type" id="edit_type" />} >
                       <option value="" />
                       <option value="string">String</option>
                       <option value="integer">Integer</option>
@@ -221,7 +229,7 @@ class FlowData extends Component {
                 <FormControl variant="outlined" className={classes.formControl}>
                   <Select native value={this.state.new_type}
                     onChange={this.handleChange('new_type')}
-                    input={<OutlinedInput name="new_type" id="new_type" />} >
+                    input={<OutlinedInput labelWidth={200} name="new_type" id="new_type" />} >
                     <option value="" />
                     <option value="string">String</option>
                     <option value="integer">Integer</option>
@@ -261,4 +269,4 @@ FlowData.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(FlowData);
+export default withStyles(styles)(connect(null,mapDispatchToProps)(FlowData));

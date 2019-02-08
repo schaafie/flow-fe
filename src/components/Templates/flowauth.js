@@ -1,4 +1,8 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { flipTemplateAuth } from '../../redux/actions.js';
+
 import apiCall from "../Api/apiCall.js";
 import StatusSwitch from "./statusswitch.js";
 import classNames from "classnames";
@@ -20,6 +24,10 @@ import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
+
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({flipTemplateAuth}, dispatch);
+}
 
 // CSS + Styles Part
 const CustomTableCell = withStyles(theme => ({
@@ -57,19 +65,21 @@ class Flowauth extends Component {
     this.state = {
       users: [],
       roles: [],
-      flipSwitch: this.flipSwitch.bind(this),
-      getStatus: this.getStatus.bind(this)
+      getStatus: this.getStatus.bind(this),
+      flipSwitch: this.flipTemplateAuth.bind(this)
     };
   }
 
-  flipSwitch(type,id) {
-    this.props.flipAuth(type,id);
+  flipTemplateAuth(type,id) {
+    this.props.flipTemplateAuth(id,type);
   }
 
-  componentWillMount() {
-    console.log("check # occurences... once per edit template");
-    apiCall.getlist( '/users', this.handleGetUsers.bind(this) );
-    apiCall.getlist( '/roles', this.handleGetRoles.bind(this) );
+  getStatus(type, id) {
+    if (type==='users') {
+      return this.props.flowauth.users.includes(id);
+    } else if (type==='roles') {
+      return this.props.flowauth.roles.includes(id);
+    }
   }
 
   handleGetUsers( result, data ) {
@@ -88,12 +98,10 @@ class Flowauth extends Component {
     }
   }
 
-  getStatus(type, id) {
-    if (type==='users') {
-      return this.props.flowauth.users.includes(id);
-    } else if (type==='roles') {
-      return this.props.flowauth.roles.includes(id);
-    }
+  componentWillMount() {
+    console.log("check # occurences... once per edit template");
+    apiCall.getlist( '/users', this.handleGetUsers.bind(this) );
+    apiCall.getlist( '/roles', this.handleGetRoles.bind(this) );
   }
 
   render() {
@@ -159,4 +167,4 @@ Flowauth.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(Flowauth);
+export default withStyles(styles)(connect(null,mapDispatchToProps)(Flowauth));

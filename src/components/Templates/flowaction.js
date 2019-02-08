@@ -1,4 +1,12 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { bindActionCreators } from 'redux';
+import { setTemplateObject, addTemplateObject,
+         deleteTemplateObject, changeTemplateObject,
+         addTemplateTerminator, changeTemplateTerminator,
+         deleteTemplateTerminator, addTemplateConnection,
+         deleteTemplateConnection } from '../../redux/actions.js';
+
 import apiCall from "../Api/apiCall.js";
 import classNames from "classnames";
 import PropTypes from "prop-types";
@@ -26,6 +34,12 @@ import RemoveIcon from '@material-ui/icons/Remove';
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
 
+const mapDispatchToProps = dispatch => {
+  return bindActionCreators({
+    addTemplateObject, changeTemplateObject,
+    addTemplateTerminator,
+    addTemplateConnection, deleteTemplateConnection }, dispatch);
+}
 
 const styles = theme => ({
   grow: {
@@ -72,22 +86,41 @@ class FlowAction extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      tabValue: "Ge"
+      tabValue: "Ge",
+      targets: this.getTargets(),
+      applications: []
     };
   }
 
+  getTargets() {
+    let tlist = [];
+    this.props.flowTemplate.flow.terminators.map(function(element) {
+      if (this.props.currentState && this.props.currentState!==element.state.id) {
+        tlist.push({'id':element.state.id,'name':element.state.name});
+      }
+    }, this);
+    this.props.flowTemplate.flow.states.map(function(element) {
+      if (this.props.currentState && this.props.currentState!==element.state.id) {
+        tlist.push({'id':element.state.id,'name':element.state.name});
+      }
+    }, this);
+    return tlist;
+  }
+
   handleChange = name => event => {
+    let value = "";
     switch(name) {
       case "input":
       case "output":
       case "name":
-      this.props.updateObject( this.props.item, name, event.target.value);
+        value = event.target.value;
         break;
       case "manual":
       case "timed":
-        this.props.updateObject( this.props.item, name, event.target.checked);
+        value = event.target.checked;
         break;
-    }
+      }
+    this.props.changeTemplateObject( this.props.currentState, name, value);
   };
 
   handleTabChange = (event, value) => {
@@ -95,45 +128,64 @@ class FlowAction extends Component {
   };
 
   setApplication = () => event => {
-    this.props.setApplication(this.props.item.state.id, event.target.value);
+    this.props.setApplication(this.props.currentState, event.target.value);
   }
 
   getDestinations( origin_id, direction, conn_id) {
-    let list = [];
-    let targets = this.props.destinations;
-    targets.forEach( function(element) {
-      this.props.connections.some(function(connection) {
-        if (direction==="input") {
-          if (connection.from !== element.id || connection.id === conn_id) {
-            list.push(element);
+    let dlist = [];
+    this.state.targets.map( function(element) {
+      if (this.props.flowTemplate.flow.connections.some( function(connection) {
+          if ( direction==="input" &&
+            ( connection.from !== element.id || connection.id === conn_id )
+          ) {
             return true;
-          }
-        } else if (direction==="output") {
-          if (connection.to !== element.id || connection.id === conn_id) {
-            list.push(element);
+          } else if ( direction==="output" &&
+            ( connection.to !== element.id || connection.id === conn_id )
+          ) {
             return true;
+          } else {
+            return false;
           }
-        }
-      });
+      })) {
+        dlist.push(element);
+      }
     }, this)
-    return list;
+    return dlist;
   }
 
   removeConnection = conn_id => event => {
-    this.props.removeConnection(conn_id);
+    this.props.deleteTemplateConnection(conn_id);
   }
 
   addConnection = direction => event => {
-    this.props.addConnection(this.props.item.state.id, direction, event.target.value);
+    if (direction=="input") {
+      this.props.addTemplateConnection(this.props.currentState,event.target.value);
+    } else {
+      this.props.addTemplateConnection(event.target.value,this.props.currentState);
+    }
+
   }
 
   changeConnection = conn_id => event => {
-    this.props.changeConnection(conn_id, this.props.item.state.id, event.target.value);
+    this.props.changeTemplateConnection(conn_id, this.props.item.state.id, event.target.value);
+  }
+
+  getCurrentState = (ft, cs) => {
+    let state = {};
+    ft.flow.states.map(function(item,index){
+      if (item.state.id===cs) {
+        state = ft.flow.states[index];
+      }
+    })
+    return state;
   }
 
   render() {
-    const { classes, theme, item, connections, applications } = this.props;
+    const { classes, theme, flowTemplate, currentState } = this.props;
     const { tabValue } = this.state;
+
+    const item = this.getCurrentState(flowTemplate, currentState);
+    const connections = flowTemplate.flow.connections;
 
     return (
       <div>
@@ -304,7 +356,7 @@ class FlowAction extends Component {
                 <Select className={classes.select}
                   inputProps={{ name: 'application', id: 'application', }}
                   value="{item.state.application}" onChange={this.setApplication} >
-                  {applications.map((app,index) => (
+                  {this.state.applications.map((app,index) => (
                   <MenuItem value={app.id} key={index}>{app.name + " - " + app.version}</MenuItem>
                   ))}
                 </Select>
@@ -327,4 +379,4 @@ FlowAction.propTypes = {
   classes: PropTypes.object.isRequired
 };
 
-export default withStyles(styles)(FlowAction);
+export default withStyles(styles)(connect(null,mapDispatchToProps)(FlowAction));
