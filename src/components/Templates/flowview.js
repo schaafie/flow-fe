@@ -37,7 +37,12 @@ class FlowView extends Component {
   }
 
   selectObject(event, item) {
-    this.props.setTemplateObject(item.state.id);
+    // Only select actions
+    if (item.state.id>0) {
+      this.props.setTemplateObject(item.state.id);
+    } else {
+      this.props.setTemplateObject(false);
+    }
   }
 
   dragObject(event, object) {

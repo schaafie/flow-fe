@@ -92,6 +92,26 @@ class FlowAction extends Component {
     };
   }
 
+  componentWillMount() {
+    this.getApplications(this);
+  }
+
+  getApplications() {
+    apiCall.getlist( '/applications', this.handleGetApplications.bind(this) );
+  }
+
+  handleGetApplications( result, data ) {
+    if (result) {
+      this.setState({ applications: data })
+    } else {
+        // Handle error
+    }
+  }
+
+  setApplication = () => event => {
+    this.props.setApplication(this.props.currentState, event.target.value);
+  }
+
   getTargets() {
     let tlist = [];
     this.props.flowTemplate.flow.terminators.map(function(element) {
@@ -126,10 +146,6 @@ class FlowAction extends Component {
   handleTabChange = (event, value) => {
     this.setState({ tabValue: value });
   };
-
-  setApplication = () => event => {
-    this.props.setApplication(this.props.currentState, event.target.value);
-  }
 
   getDestinations( origin_id, direction, conn_id) {
     let dlist = [];

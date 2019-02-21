@@ -1,6 +1,6 @@
 {
   "name": "",
-  "Version": "0.1",
+  "version": "0.1",
   "description": "",
   "owner": "",
   "creator": "",
@@ -8,8 +8,8 @@
     "users":[],
     "roles":[]
   },
-  "data": [],
   "flow": {
+    "data": [],
     "terminators": [
         { "state": {
             "id": 0,

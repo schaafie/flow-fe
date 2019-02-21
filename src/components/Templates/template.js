@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { newTemplate, openTemplate, saveTemplate, changeTemplateGen } from '../../redux/actions.js';
+import { newTemplate, openTemplate, saveTemplate, updateTemplate, changeTemplateGen } from '../../redux/actions.js';
 
 import apiCall from "../Api/apiCall.js";
 import classNames from "classnames";
@@ -18,22 +18,34 @@ import Typography from "@material-ui/core/Typography";
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
 import AppBar from '@material-ui/core/AppBar';
+import SpeedDial from '@material-ui/lab/SpeedDial';
+import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import FlowDefinition from "./flowdefinition";
 import FlowAuth from './flowauth.js';
 import FlowData from './flowdata.js';
+import SaveIcon from '@material-ui/icons/Save';
 
 const mapStateToProps = state => {
   return {
     template: state.template.current,
-    currentState: state.template.currentState
+    currentState: state.template.currentState,
+    currentid: state.template.currentid
   };
 }
 
 const mapDispatchToProps = dispatch => {
-  return bindActionCreators({newTemplate, openTemplate, saveTemplate, changeTemplateGen}, dispatch);
+  return bindActionCreators(
+    {newTemplate, openTemplate, saveTemplate, updateTemplate, changeTemplateGen}
+    , dispatch);
 }
+
+const sdActions = [
+  { label: 'x.0.0', icon: <SaveIcon />, name: 'Major' },
+  { label: '.x.0', icon: <SaveIcon />, name: 'Medior' },
+  { label: '..x', icon: <SaveIcon />, name: 'Minor' },
+];
 
 const styles = theme => ({
   textField: {
@@ -55,7 +67,12 @@ const styles = theme => ({
   },
   header: {
     paddingBottom: theme.spacing.unit
-  }
+  },
+  speedDial: {
+    position: 'absolute',
+    bottom: theme.spacing.unit * 2,
+    right: theme.spacing.unit * 3,
+  },
 });
 
 function TabContainer(props) {
@@ -74,11 +91,53 @@ class Template extends Component {
   constructor() {
     super();
     this.state = {
+      sdopen: false,
       templateid: "",
       tabValue: "G",
-      applications: [],
+      applications: []
     };
   }
+
+  handleSDClick = event => {
+    this.setState(state => ({
+      sdopen: !state.sdopen,
+    }));
+  };
+
+  buildNewVersion = (version,type) => {
+    let parts = version.split('.');
+    let vparts = parts.map(function(item,index){return (!isNaN(item))?Number(item):0;});
+    if (vparts.length<3) {vparts.push(0);}
+    switch(type) {
+      case 'Major':
+        return (vparts[0]+1)+".0";
+      case 'Medior':
+        return vparts[0]+"."+(vparts[1]+1);
+      case 'Minor':
+        return vparts[0]+"."+vparts[1]+"."+(vparts[2]+1);
+      default:
+        return version;
+    }
+  }
+
+  handleSaveClick = (type) => {
+    let cversion = this.props.template.version;
+    let nversion = this.buildNewVersion(cversion, type);
+    if (cversion===nversion && !this.props.currentid) {
+      this.props.updateTemplate(this.props.currentid, this.props.template);
+    } else {
+      this.props.changeTemplateGen('version', nversion);
+      this.props.saveTemplate();
+    }
+  }
+
+  handleSDClose = () => {
+    this.setState({ sdopen: false });
+  };
+
+  handleSDOpen = () => {
+    this.setState({ sdopen: true });
+  };
 
   handleTabChange = (event, value) => {
     this.setState({ tabValue: value });
@@ -87,23 +146,6 @@ class Template extends Component {
   handleChange = prop => event => {
     this.props.changeTemplateGen(prop, event.target.value);
   };
-
-  handleOnSubmit = e => {
-    e.preventDefault();
-    if (this.props.match.params.id!=='') {
-      apiCall.update( '/templates/', this.props.match.params.id, this.props.template, this.handleUpdate.bind(this) );
-    } else {
-      apiCall.create('/templates', this.props.template, this.handleUpdate.bind(this) );
-    }
-  }
-
-  handleUpdate(result, data) {
-    if (result) {
-      this.getData(data.id);
-    } else {
-      // Handle result
-    }
-  }
 
   componentWillMount() {
     if (this.props.match.params.id) {
@@ -115,7 +157,7 @@ class Template extends Component {
 
   render() {
     const { classes, theme, template, currentState } = this.props;
-    const { tabValue } = this.state;
+    const { tabValue, sdopen } = this.state;
 
     return (
       <div>
@@ -141,7 +183,7 @@ class Template extends Component {
                  </Grid>
                  <Grid item xs={4}>
                    <TextField id="version" label="version" fullWidth margin="normal" variant="outlined"
-                     className={classes.textField} value={template.version} InputProps={{ readOnly: true }}
+                     className={classes.textField} value={template.version} InputProps={{readOnly:true}}
                    />
                  </Grid>
                  <Grid item xs={12}>
@@ -160,7 +202,7 @@ class Template extends Component {
              {tabValue === "D" &&
                <TabContainer>
                  <Grid container>
-                   <FlowData flowdata={template.data} />
+                   <FlowData flowdata={template.flow.data} />
                  </Grid>
                </TabContainer>}
            {tabValue === "F" &&
@@ -172,9 +214,31 @@ class Template extends Component {
                </Grid>
              </TabContainer>}
           <Grid container justify="flex-end">
-            <Button variant="contained" aria-label="Add" color="primary" className={classes.button} onClick={this.handleOnSubmit} >
-              Save definition
-            </Button>
+            <SpeedDial
+              ariaLabel="SpeedDial template"
+              className={classes.speedDial}
+              hidden={false}
+              icon={<SaveIcon />}
+              onBlur={this.handleSDClose}
+              onClick={this.handleSDClick}
+              onClose={this.handleSDClose}
+              onFocus={this.handleSDOpen}
+              onMouseEnter={this.handleSDOpen}
+              onMouseLeave={this.handleSDClose}
+              open={sdopen}
+              direction='up'
+            >
+              {sdActions.map(action => (
+                <SpeedDialAction
+                  key={action.name}
+                  icon={action.icon}
+                  tooltipTitle={action.label}
+                  tooltipOpen
+                  tooltipTitle={action.name}
+                  onClick={this.handleSaveClick.bind(this,action.name)}
+                />
+              ))}
+            </SpeedDial>
           </Grid>
         </Paper>
       </div>

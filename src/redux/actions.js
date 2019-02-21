@@ -1,6 +1,9 @@
 import {
-  NEW_TEMPLATE, OPEN_TEMPLATE, SAVE_TEMPLATE, UPDATE_TEMPLATE,
-  CHANGE_TEMPLATE_GEN, FLIP_TEMPLATE_AUTH, SET_TEMPLATE_OBJECT,
+  NEW_TEMPLATE, SET_TEMPLATE_OBJECT,
+  OPEN_TEMPLATE, OPEN_TEMPLATE_SUCCES,
+  SAVE_TEMPLATE, SAVE_TEMPLATE_SUCCES,
+  UPDATE_TEMPLATE, UPDATE_TEMPLATE_SUCCES,
+  CHANGE_TEMPLATE_GEN, FLIP_TEMPLATE_AUTH,
   ADD_TEMPLATE_DATA, CHANGE_TEMPLATE_DATA, DELETE_TEMPLATE_DATA,
   ADD_TEMPLATE_OBJECT, CHANGE_TEMPLATE_OBJECT, DELETE_TEMPLATE_OBJECT,
   ADD_TEMPLATE_TERMINATOR, CHANGE_TEMPLATE_TERMINATOR, DELETE_TEMPLATE_TERMINATOR,
@@ -14,7 +17,7 @@ const baseURL = 'http://localhost:4000/api';
 export const openTemplate = (id) => {
   return (dispatch) => {
     return axios.request({
-      baseURL: this.baseURL,
+      baseURL: baseURL,
       url: '/templates/' + id,
       method: 'get',
       headers: {
@@ -29,31 +32,44 @@ export const openTemplate = (id) => {
 };
 
 export const openTemplateSucces = (data) => ({
-  type: OPEN_TEMPLATE,
+  type: OPEN_TEMPLATE_SUCCES,
   data: data
 });
 
-export const saveTemplate = (dataObject) => {
-  return (dispatch) => {
+export const saveTemplate = () => {
+  return (dispatch, getState)  => {
+    const {current} = getState().template;
     return axios.request({
-      baseURL: this.baseURL,
+      baseURL: baseURL,
       url: '/templates',
       method: 'post',
-      data: dataObject,
+      data: {
+        template: {
+          name: current.name,
+          version: current.version,
+          description: current.description,
+          can_start: current.canstart,
+          definition: current
+        }
+      },
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
         'Content-Type': 'application/json',
         'Authorization': 'Bearer '+ basicAuth.jwt
       }
     })
-    .then(response => {dispatch(saveTemplateSucces(response.data.data)); })
-    .catch(error => {console.log(error);});
+    .then(response => {
+      dispatch(saveTemplateSucces(response.data.data))
+    })
+    .catch(error => {
+      console.log(error);
+    });
   }
 };
 
 export const saveTemplateSucces = (data) => ({
-  type: SAVE_TEMPLATE,
-  data
+  type: SAVE_TEMPLATE_SUCCES,
+  data: data
 });
 
 export const updateTemplate = (id,dataObject) => {
@@ -62,7 +78,16 @@ export const updateTemplate = (id,dataObject) => {
       baseURL: this.baseURL,
       url: '/templates/' + id,
       method: 'put',
-      data: { dataObject },
+      data: {
+        template: {
+          id: id,
+          name: dataObject.name,
+          version: dataObject.version,
+          description: dataObject.description,
+          can_start: dataObject.canstart,
+          definition: dataObject
+        }
+      },
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
         'Content-Type': 'application/json',

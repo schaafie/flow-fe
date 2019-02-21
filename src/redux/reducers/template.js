@@ -3,7 +3,8 @@ import terminatorjson from './terminator.json';
 import templatejson from './template.json';
 
 import {
-  NEW_TEMPLATE, OPEN_TEMPLATE, SAVE_TEMPLATE, UPDATE_TEMPLATE,
+  NEW_TEMPLATE, OPEN_TEMPLATE, OPEN_TEMPLATE_SUCCES,
+  SAVE_TEMPLATE, UPDATE_TEMPLATE, SAVE_TEMPLATE_SUCCES,
   CHANGE_TEMPLATE_GEN, FLIP_TEMPLATE_AUTH,
   ADD_TEMPLATE_DATA, DELETE_TEMPLATE_DATA, CHANGE_TEMPLATE_DATA,
   ADD_TEMPLATE_OBJECT, CHANGE_TEMPLATE_OBJECT, DELETE_TEMPLATE_OBJECT,
@@ -12,7 +13,7 @@ import {
   ADD_TEMPLATE_CONNECTION, CHANGE_TEMPLATE_CONNECTION, DELETE_TEMPLATE_CONNECTION
 } from "../actionTypes";
 
-function templateReducer(state = { current: {}, currentState: false }, action) {
+function templateReducer( state={current:{},currentState:false,currentid:false}, action) {
   let fdata = {};
   let newState = {};
   let newConn = {};
@@ -24,16 +25,24 @@ function templateReducer(state = { current: {}, currentState: false }, action) {
     case NEW_TEMPLATE:
       return {
         ...state,
-        current: templatejson
+        current: templatejson,
+        currentid: false
       }
 
-    case SAVE_TEMPLATE:
-      return state;
-
-    case OPEN_TEMPLATE:
+    case SAVE_TEMPLATE_SUCCES:
       return {
         ...state,
-        current: action.data
+        currentid: action.data.id
+      }
+
+    case UPDATE_TEMPLATE:
+      return state;
+
+    case OPEN_TEMPLATE_SUCCES:
+      return {
+        ...state,
+        current: action.data.definition,
+        currentid: action.data.id
       }
 
     case CHANGE_TEMPLATE_GEN:
@@ -47,10 +56,10 @@ function templateReducer(state = { current: {}, currentState: false }, action) {
 
     case ADD_TEMPLATE_DATA:
       maxId = 0;
-      state.current.data.forEach(function(item){
+      state.current.flow.data.forEach(function(item){
         if (item.id>maxId) {maxId=item.id}
       });
-      fdata = state.current.data.concat({
+      fdata = state.current.flow.data.concat({
         id: maxId+1,
         name: action.name,
         type: action.dtype,
@@ -61,44 +70,53 @@ function templateReducer(state = { current: {}, currentState: false }, action) {
         ...state,
         current: {
           ...state.current,
-          data: fdata
+          flow: {
+            ...state.current.flow,
+            data: fdata
+          }
         }
       }
 
     case CHANGE_TEMPLATE_DATA:
-      let cdata = state.current.data;
-      state.current.data.map((item,index) => {
+      let cdata = state.current.flow.data;
+      state.current.flow.data.map((item,index) => {
         if(item.id===action.id) {
-          cdata = [ ...state.current.data.slice(0, index),
+          cdata = [ ...state.current.flow.data.slice(0, index),
              { id: action.id,
                name: action.name,
                type: action.dtype,
                format: action.format,
                default: action.def },
-            ...state.current.data.slice(index + 1)];
+            ...state.current.flow.data.slice(index + 1)];
         }
       });
       return {
         ...state,
         current: {
           ...state.current,
-          data: cdata
+          flow: {
+            ...state.current.flow,
+            data: cdata
+          }
         }
       }
 
     case DELETE_TEMPLATE_DATA:
-      let ddata = state.current.data;
-      state.current.data.map((item,index) => {
+      let ddata = state.current.flow.data;
+      state.current.flow.data.map((item,index) => {
         if(item.id===action.id) {
-          ddata = [ ...state.current.data.slice(0, index),
-                    ...state.current.data.slice(index + 1) ];
+          ddata = [ ...state.current.flow.data.slice(0, index),
+                    ...state.current.flow.data.slice(index + 1) ];
         }
       });
       return {
         ...state,
         current: {
           ...state.current,
-          data: ddata
+          flow: {
+            ...state.current.flow,
+            data: ddata
+          }
         }
       }
 
@@ -276,6 +294,26 @@ function templateReducer(state = { current: {}, currentState: false }, action) {
 
     case CHANGE_TEMPLATE_OBJECT:
       newState = {};
+      state.current.flow.terminators.map(function(item,index) {
+        if (item.state.id===action.id) {
+          let updatedState = state.current.flow.terminators[index];
+          updatedState.state[action.key] = action.value;
+          newState = {
+            ...state,
+            current: {
+              ...state.current,
+              flow: {
+                ...state.current.flow,
+                terminators: [
+                  ...state.current.flow.terminators.slice(0, index),
+                  updatedState,
+                  ...state.current.flow.terminators.slice(index+1)
+                ]
+              }
+            }
+          }
+        }
+      });
       state.current.flow.states.map(function(item,index) {
         if (item.state.id===action.id) {
           let updatedState = state.current.flow.states[index];

@@ -91,7 +91,7 @@ class Templates extends Component {
     this.props.history.push('/templates/'+item.id);
   }
 
-  addTemplate = () => {
+  addTemplate = event => {
     this.props.history.push('/template');
   }
 
