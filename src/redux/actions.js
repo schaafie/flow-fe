@@ -1,12 +1,13 @@
 import {
-  NEW_TEMPLATE, SET_TEMPLATE_OBJECT,
+  NEW_TEMPLATE, SET_TEMPLATE_OBJECT, SET_TEMPLATE_PLACE,
   OPEN_TEMPLATE, OPEN_TEMPLATE_SUCCES,
   SAVE_TEMPLATE, SAVE_TEMPLATE_SUCCES,
   UPDATE_TEMPLATE, UPDATE_TEMPLATE_SUCCES,
   CHANGE_TEMPLATE_GEN, FLIP_TEMPLATE_AUTH,
   ADD_TEMPLATE_DATA, CHANGE_TEMPLATE_DATA, DELETE_TEMPLATE_DATA,
   ADD_TEMPLATE_OBJECT, CHANGE_TEMPLATE_OBJECT, DELETE_TEMPLATE_OBJECT,
-  ADD_TEMPLATE_TERMINATOR, CHANGE_TEMPLATE_TERMINATOR, DELETE_TEMPLATE_TERMINATOR,
+  CHANGE_TEMPLATE_OBJECT_DATA,
+  ADD_TEMPLATE_PLACE, CHANGE_TEMPLATE_PLACE, DELETE_TEMPLATE_PLACE,
   ADD_TEMPLATE_CONNECTION, CHANGE_TEMPLATE_CONNECTION, DELETE_TEMPLATE_CONNECTION
 } from "./actionTypes";
 import basicAuth from "../components/Auth/basicAuth.js";
@@ -147,6 +148,11 @@ export const setTemplateObject = (id) => ({
   id: id
 })
 
+export const setTemplatePlace = (id) => ({
+  type: SET_TEMPLATE_PLACE,
+  id: id
+})
+
 export const addTemplateObject = () => ({
   type: ADD_TEMPLATE_OBJECT,
   object: {}
@@ -159,37 +165,46 @@ export const changeTemplateObject = (id, key, value) => ({
   value: value
 })
 
-export const deleteTemplateObject = (id) => ({
-  type: DELETE_TEMPLATE_OBJECT,
-  id: id
-})
-
-export const addTemplateTerminator = () => ({
-  type: ADD_TEMPLATE_TERMINATOR,
-  object: {}
-})
-
-export const changeTemplateTerminator = (id, key, value) => ({
-  type: CHANGE_TEMPLATE_TERMINATOR,
+export const changeTemplateObjectData = (id, key, value) => ({
+  type: CHANGE_TEMPLATE_OBJECT_DATA,
   id: id,
   key: key,
   value: value
 })
 
-export const deleteTemplateTerminator = (id) => ({
-  type: DELETE_TEMPLATE_TERMINATOR,
+export const deleteTemplateObject = (id) => ({
+  type: DELETE_TEMPLATE_OBJECT,
   id: id
 })
 
-export const addTemplateConnection = (to, from) => ({
+export const addTemplatePlace = () => ({
+  type: ADD_TEMPLATE_PLACE,
+  object: {}
+})
+
+export const changeTemplatePlace = (id, key, value) => ({
+  type: CHANGE_TEMPLATE_PLACE,
+  id: id,
+  key: key,
+  value: value
+})
+
+export const deleteTemplatePlace = (id) => ({
+  type: DELETE_TEMPLATE_PLACE,
+  id: id
+})
+
+export const addTemplateConnection = (ctype, to, from) => ({
   type: ADD_TEMPLATE_CONNECTION,
+  ctype: ctype,
   to: to,
   from: from
 })
 
-export const changeTemplateConnection = (id, to, from) => ({
+export const changeTemplateConnection = (id, ctype, to, from) => ({
   type: CHANGE_TEMPLATE_CONNECTION,
   id: id,
+  ctype: ctype,
   to: to,
   from: from
 })

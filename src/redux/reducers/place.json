@@ -1,8 +1,8 @@
 {
   "place": {
     "id": 0,
-    "type": "end",
-    "name": "new end place",
+    "type": "place",
+    "name": "p",
     "location": {
       "x": 100,
       "y": 100

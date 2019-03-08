@@ -1,14 +1,11 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { setTemplateObject, addTemplateObject,
-         deleteTemplateObject, changeTemplateObject,
-         addTemplateTerminator, changeTemplateTerminator,
-         deleteTemplateTerminator, addTemplateConnection,
-         deleteTemplateConnection } from '../../redux/actions.js';
+import { addTemplateObject, addTemplatePlace } from '../../redux/actions.js';
 
 import PropTypes from "prop-types";
 import { withStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import AppBar from '@material-ui/core/AppBar';
@@ -19,13 +16,17 @@ import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
 import FileCopyIcon from '@material-ui/icons/FileCopy';
 import FlowAction from './flowaction.js';
+import FlowPlace from './flowplace.js';
 import FlowView from './flowview.js';
 
 const mapDispatchToProps = dispatch => {
-  return bindActionCreators({ addTemplateObject, addTemplateTerminator }, dispatch);
+  return bindActionCreators({ addTemplateObject, addTemplatePlace }, dispatch);
 }
 
 const styles = theme => ({
+  button: {
+    margin: theme.spacing.unit,
+  },
   menuButton: {
     marginLeft: -12,
     marginRight: 20,
@@ -50,7 +51,7 @@ class FlowDefinition extends Component {
   }
 
   render() {
-    const { classes, state, currentState, flowTemplate } = this.props;
+    const { classes, state, currentState, currentPlace, flowTemplate } = this.props;
 
     return(
       <Grid container>
@@ -61,12 +62,18 @@ class FlowDefinition extends Component {
           <Paper>
             <AppBar position="static">
               <Toolbar>
-                <IconButton
+                <Button
                   onClick={this.props.addTemplateObject}
-                  className={classes.menuButton}
+                  className={classes.button}
                   color="inherit" aria-label="Add action">
-                  <AddIcon />
-                </IconButton>
+                  <AddIcon /> Action
+                </Button>
+                <Button
+                  onClick={this.props.addTemplatePlace}
+                  className={classes.button}
+                  color="inherit" aria-label="Add action">
+                  <AddIcon /> place
+                </Button>
                 {currentState!==false &&
                   <IconButton
                     className={classes.menuButton}
@@ -76,11 +83,14 @@ class FlowDefinition extends Component {
                 }
               </Toolbar>
             </AppBar>
-            {currentState===false &&
+            {currentState===false && currentPlace===false &&
               <div>No item selected</div>
             }
             {currentState!==false &&
               <FlowAction flowTemplate={flowTemplate} currentState={currentState} />
+            }
+            {currentPlace!==false &&
+              <FlowPlace flowTemplate={flowTemplate} currentPlace={currentPlace} />
             }
           </Paper>
         </Grid>

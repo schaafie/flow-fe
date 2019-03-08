@@ -10,14 +10,14 @@
   },
   "flow": {
     "data": [],
-    "terminators": [
-        { "state": {
+    "places": [
+        { "place": {
             "id": 0,
             "type": "start",
             "name": "start",
             "location": { "x": 200, "y": 100 }
         }},
-        { "state":
+        { "place":
           {
             "id": -1,
             "type": "end",
@@ -34,8 +34,7 @@
           "application":0,
           "system":"",
           "call":"",
-          "input": [],
-          "output": []
+          "data": []
         },
         "cando": {
           "users":[],
@@ -52,11 +51,13 @@
     "connections": [
       { "connection": {
         "id": 0,
+        "type": "p2a",
         "from": 0,
         "to": 1
       }},
       { "connection": {
         "id": 1,
+        "type": "a2p",
         "from": 1,
         "to": -1
       }}

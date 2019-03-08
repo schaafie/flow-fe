@@ -197,7 +197,7 @@ class Application extends Component {
     const { id, name, version, description, definition } = this.state;
 
     let data = { application: { name: name, version: version, description: description, definition: definition } }
-    if (id!=='') {
+    if (id!==0) {
       apiCall.update( '/applications/', id, data, this.handleUpdate.bind(this) );
     } else {
       apiCall.create('/applications', data, this.handleUpdate.bind(this) );

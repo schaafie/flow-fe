@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { setTemplateObject, addTemplateObject,
-         deleteTemplateObject, changeTemplateObject,
-         addTemplateTerminator, changeTemplateTerminator,
-         deleteTemplateTerminator, addTemplateConnection,
+import { changeTemplateObject,
+         addTemplateConnection,
          deleteTemplateConnection } from '../../redux/actions.js';
 
 import apiCall from "../Api/apiCall.js";
@@ -31,14 +29,15 @@ import grey from '@material-ui/core/colors/grey';
 
 import AddIcon from '@material-ui/icons/Add';
 import RemoveIcon from '@material-ui/icons/Remove';
+import ThumbUpIcon from '@material-ui/icons/ThumbUp';
 import Visibility from "@material-ui/icons/Visibility";
 import VisibilityOff from "@material-ui/icons/VisibilityOff";
 
 const mapDispatchToProps = dispatch => {
   return bindActionCreators({
-    addTemplateObject, changeTemplateObject,
-    addTemplateTerminator,
-    addTemplateConnection, deleteTemplateConnection }, dispatch);
+    changeTemplateObject,
+    addTemplateConnection,
+    deleteTemplateConnection }, dispatch);
 }
 
 const styles = theme => ({
@@ -88,9 +87,18 @@ class FlowAction extends Component {
     this.state = {
       tabValue: "Ge",
       targets: this.getTargets(),
-      applications: []
+      applications: [],
+      applicationNames: [],
+      applicationName: '',
+      applicationVersions: [],
+      applicationVersion: '',
+      applicationId: 0
     };
   }
+
+  handleTabChange = (event, value) => {
+    this.setState({ tabValue: value });
+  };
 
   componentWillMount() {
     this.getApplications(this);
@@ -102,29 +110,58 @@ class FlowAction extends Component {
 
   handleGetApplications( result, data ) {
     if (result) {
-      this.setState({ applications: data })
+      let appNames = data.map(item => item.name);
+      appNames = appNames.filter((x, i, a) => a.indexOf(x) == i);
+      this.setState({
+        applications: data,
+        applicationNames: appNames
+      });
     } else {
         // Handle error
     }
   }
 
-  setApplication = () => event => {
-    this.props.setApplication(this.props.currentState, event.target.value);
+  setApplicationName = () => event => {
+    let appName = event.target.value;
+    let appVersions = this.state.applications.filter(item=>item.name==appName);
+    appVersions = appVersions.map( item => item.version );
+
+    this.setState({
+      applicationName: appName,
+      applicationVersions: appVersions,
+      applicationVersion: ''
+    })
+  }
+
+  setApplicationVersion = () => event => {
+    this.setState({ applicationVersion: event.target.value });
+  }
+
+  setApplication() {
+    this.state.applications.some( app => {
+      if (app.name==this.state.applicationName && app.version==this.state.applicationVersion) {
+        this.setState({applicationId: app.id});
+        // Get application data and create data application object
+        let dao = { application: app.name,
+                    version: app.version,
+                    system: app.definition.system,
+                    module: app.definition.module,
+                    call: app.definition.call,
+                    data: []};
+        dao.data = app.definition.data.map( item => {
+          return { name: item.name, inout: item.inout, globalitem: '' }
+        })
+
+        this.props.changeTemplateObject(this.props.currentState, 'exec', dao );
+        return true;
+      }
+    }, this);
   }
 
   getTargets() {
-    let tlist = [];
-    this.props.flowTemplate.flow.terminators.map(function(element) {
-      if (this.props.currentState && this.props.currentState!==element.state.id) {
-        tlist.push({'id':element.state.id,'name':element.state.name});
-      }
+    return this.props.flowTemplate.flow.places.map(function(element) {
+      return ({'id':element.place.id,'name':element.place.name});
     }, this);
-    this.props.flowTemplate.flow.states.map(function(element) {
-      if (this.props.currentState && this.props.currentState!==element.state.id) {
-        tlist.push({'id':element.state.id,'name':element.state.name});
-      }
-    }, this);
-    return tlist;
   }
 
   handleChange = name => event => {
@@ -141,10 +178,6 @@ class FlowAction extends Component {
         break;
       }
     this.props.changeTemplateObject( this.props.currentState, name, value);
-  };
-
-  handleTabChange = (event, value) => {
-    this.setState({ tabValue: value });
   };
 
   getDestinations( origin_id, direction, conn_id) {
@@ -174,16 +207,24 @@ class FlowAction extends Component {
   }
 
   addConnection = direction => event => {
-    if (direction=="input") {
-      this.props.addTemplateConnection(this.props.currentState,event.target.value);
+    if (direction === "p2a") {
+      this.props.addTemplateConnection('p2a', this.props.currentState, event.target.value);
     } else {
-      this.props.addTemplateConnection(event.target.value,this.props.currentState);
+      this.props.addTemplateConnection('a2p', event.target.value, this.props.currentState);
     }
-
   }
 
   changeConnection = conn_id => event => {
-    this.props.changeTemplateConnection(conn_id, this.props.item.state.id, event.target.value);
+    this.props.flowTemplate.flow.connections.some(function(conn) {
+      if (conn.id === conn_id) {
+        if (conn.type === 'a2p') {
+          this.props.changeTemplateConnection(conn_id, conn.type, conn.to, event.target.value);
+        } else {
+          this.props.changeTemplateConnection(conn_id, conn.type, event.target.value, conn.from );
+        }
+        return true;
+      }
+    });
   }
 
   getCurrentState = (ft, cs) => {
@@ -264,7 +305,7 @@ class FlowAction extends Component {
                   <Grid item xs={12} className={classes.targetSelect}>
                     <Grid container>
                     { connections.map((conn, key) => (
-                      (item.state.id===conn.connection.to) &&
+                      (item.state.id===conn.connection.to) && (conn.connection.type==='p2a') &&
                       <Grid item xs={12} key={key}>
                         <Select
                           className={classes.select}
@@ -290,7 +331,7 @@ class FlowAction extends Component {
                           className={classes.select}
                           inputProps={{ name: 'input_new', id: 'input_new', }}
                           value=""
-                          onChange={this.addConnection("input")} >
+                          onChange={this.addConnection("p2a")} >
                           {this.getDestinations(item.state.id, 'input', false).map((el,index) => (
                             <MenuItem value={el.id} key={index}>
                               {el.name}
@@ -321,7 +362,7 @@ class FlowAction extends Component {
                   <Grid item xs={12} className={classes.targetSelect}>
                     <Grid container>
                     { connections.map((conn, key) => (
-                      (item.state.id===conn.connection.from) &&
+                      (item.state.id===conn.connection.from) && (conn.connection.type==='a2p') &&
                       <Grid item xs={12} key={key}>
                         <Select
                           className={classes.select}
@@ -347,7 +388,7 @@ class FlowAction extends Component {
                           className={classes.select}
                           inputProps={{ name: 'output_new', id: 'output_new', }}
                           value=""
-                          onChange={this.addConnection("output")} >
+                          onChange={this.addConnection("a2p")} >
                           {this.getDestinations(item.state.id, 'output', false).map((el,index) => (
                             <MenuItem value={el.id} key={index}>
                               {el.name}
@@ -368,22 +409,52 @@ class FlowAction extends Component {
           {tabValue === "Ac" &&
           <TabContainer>
             <Grid container>
-              <Grid item xs={12}>
+              <Grid item xs={6}>
                 <Select className={classes.select}
-                  inputProps={{ name: 'application', id: 'application', }}
-                  value="{item.state.application}" onChange={this.setApplication} >
-                  {this.state.applications.map((app,index) => (
-                  <MenuItem value={app.id} key={index}>{app.name + " - " + app.version}</MenuItem>
+                  inputProps={{ name:'applicationname', id:'applicationname' }}
+                  value={this.state.applicationName}
+                  onChange={this.setApplicationName()} >
+                  {this.state.applicationNames.map((name,index) => (
+                  <MenuItem value={name} key={index}>{name}</MenuItem>
                   ))}
                 </Select>
               </Grid>
-              {item.state.application!=='' &&
-              <Grid item xs={12}>
-                loop data
+              <Grid item xs={4}>
+                <Select className={classes.select}
+                  inputProps={{ name:'applicationversion', id:'applicationversion' }}
+                  value={this.state.applicationVersion}
+                  onChange = {this.setApplicationVersion()} >
+                  {this.state.applicationVersions.map((version,index) => (
+                  <MenuItem value={version} key={index}>{version}</MenuItem>
+                  ))}
+                </Select>
               </Grid>
-              }
+            {this.state.applicationVersion!=='' &&
+              <Grid item xs={2}>
+                <IconButton
+                  onClick={this.setApplication.bind(this)}
+                  className={classes.menuButton}
+                  color="inherit" aria-label="Set Application">
+                  <ThumbUpIcon />
+                </IconButton>
+              </Grid>
+            }
             </Grid>
-          </TabContainer>}
+            {this.state.applicationId!==0 && item.state.exec.data.map((dataitem, key) => (
+            <Grid container key={key}>
+              <Grid item xs={5}>
+                <span>{dataitem.name}</span>
+              </Grid>
+              <Grid item xs={2}>
+                <span>{dataitem.inout}</span>
+              </Grid>
+              <Grid item xs={5}>
+                <span>{dataitem.globalitem}</span>
+              </Grid>
+            </Grid>
+            ))}
+          </TabContainer>
+        }
         </div>
       }
     </div>

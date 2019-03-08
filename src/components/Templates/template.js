@@ -31,6 +31,7 @@ const mapStateToProps = state => {
   return {
     template: state.template.current,
     currentState: state.template.currentState,
+    currentPlace: state.template.currentPlace,
     currentid: state.template.currentid
   };
 }
@@ -156,7 +157,7 @@ class Template extends Component {
   }
 
   render() {
-    const { classes, theme, template, currentState } = this.props;
+    const { classes, theme, template, currentState, currentPlace } = this.props;
     const { tabValue, sdopen } = this.state;
 
     return (
@@ -210,6 +211,7 @@ class Template extends Component {
                <Grid container>
                  <FlowDefinition
                   currentState={currentState}
+                  currentPlace={currentPlace}
                   flowTemplate={template} />
                </Grid>
              </TabContainer>}

@@ -1,5 +1,5 @@
 import objectjson from './object.json';
-import terminatorjson from './terminator.json';
+import placejson from './place.json';
 import templatejson from './template.json';
 
 import {
@@ -8,15 +8,15 @@ import {
   CHANGE_TEMPLATE_GEN, FLIP_TEMPLATE_AUTH,
   ADD_TEMPLATE_DATA, DELETE_TEMPLATE_DATA, CHANGE_TEMPLATE_DATA,
   ADD_TEMPLATE_OBJECT, CHANGE_TEMPLATE_OBJECT, DELETE_TEMPLATE_OBJECT,
-  SET_TEMPLATE_OBJECT,
-  ADD_TEMPLATE_TERMINATOR, CHANGE_TEMPLATE_TERMINATOR, DELETE_TEMPLATE_TERMINATOR,
+  CHANGE_TEMPLATE_OBJECT_DATA,
+  SET_TEMPLATE_OBJECT, SET_TEMPLATE_PLACE,
+  ADD_TEMPLATE_PLACE, CHANGE_TEMPLATE_PLACE, DELETE_TEMPLATE_PLACE,
   ADD_TEMPLATE_CONNECTION, CHANGE_TEMPLATE_CONNECTION, DELETE_TEMPLATE_CONNECTION
 } from "../actionTypes";
 
-function templateReducer( state={current:{},currentState:false,currentid:false}, action) {
+function templateReducer( state={current:{},currentState:false,currentPlace:false,currentid:false}, action) {
   let fdata = {};
   let newState = {};
-  let newConn = {};
   let maxId = 0;
   let newId = 0;
   let index = 0;
@@ -152,51 +152,62 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
     case SET_TEMPLATE_OBJECT:
       return {
         ...state,
-        currentState: action.id
+        currentState: action.id,
+        currentPlace: false
+      }
+
+    case SET_TEMPLATE_PLACE:
+      return {
+        ...state,
+        currentPlace: action.id,
+        currentState: false
       }
 
     case ADD_TEMPLATE_OBJECT:
+      let newObject = JSON.parse(JSON.stringify(objectjson));
       newId = 1;
       state.current.flow.states.forEach( function(item, index) {
         if (item.state.id >= newId) newId = item.state.id + 1;
       });
-      newState = objectjson;
-      newState.state.id = newId;
+      newObject.state.id = newId;
 
       return {
         ...state,
         currentState: newId,
+        currentPlace: false,
         current: {
           ...state.current,
           flow: {
             ...state.current.flow,
             states: [
               ...state.current.flow.states,
-              newState
+              newObject
             ]
           }
         }
       }
 
-    case ADD_TEMPLATE_TERMINATOR:
-      newId = -1;
-      state.current.flow.terminators.forEach( function(item, index) {
-        if (item.state.id <= newId) newId = item.state.id - 1;
+    case ADD_TEMPLATE_PLACE:
+      newId = 1;
+      state.current.flow.places.forEach( function(item, index) {
+        if (item.place.id >= newId) newId = item.place.id + 1;
       });
 
-      newState = terminatorjson;
-      newState.state.id = newId;
+      let newPlace = JSON.parse(JSON.stringify(placejson));
+      newPlace.place.id = newId;
+      newPlace.place.name += newId;
 
       return {
         ...state,
-        currentState: newId,
+        currentState: false,
+        currentPlace: newId,
         current: {
           ...state.current,
           flow: {
             ...state.current.flow,
-            terminators: [
-              ...state.current.flow.terminators.states,
-              newState
+            places: [
+              ...state.current.flow.places,
+              newPlace
             ]
           }
         }
@@ -207,9 +218,10 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
       state.current.flow.connections.forEach(function(conn){
         if (conn.connection.id > maxId) maxId = conn.connection.id;
       });
-      newConn = {
+      let newConn = {
         'connection': {
           'id': maxId+1,
+          'type': action.ctype,
           'from': action.from,
           'to': action.to
         }
@@ -250,19 +262,19 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
       });
       return state;
 
-    case DELETE_TEMPLATE_TERMINATOR:
+    case DELETE_TEMPLATE_PLACE:
       index = 0;
-      state.current.flow.terminators.map(function(item,index) {
-        if (item.state.id===action.id) {
+      state.current.flow.places.map(function(item,index) {
+        if (item.place.id===action.id) {
           return {
             ...state,
             current: {
               ...state.current,
               flow: {
                 ...state.current.flow,
-                terminators: [
-                  ...state.current.flow.terminators.slice(0, index),
-                  ...state.current.flow.terminators.slice(index+1)
+                places: [
+                  ...state.current.flow.places.slice(0, index),
+                  ...state.current.flow.places.slice(index+1)
                 ]
               }
             }
@@ -273,9 +285,10 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
 
     case DELETE_TEMPLATE_CONNECTION:
       index = 0;
+      newState = {};
       state.current.flow.connections.map(function(item,index) {
         if (item.connection.id===action.id) {
-          return {
+          newState = {
             ...state,
             current: {
               ...state.current,
@@ -290,30 +303,10 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
           }
         }
       });
-      return state;
+      return newState;
 
     case CHANGE_TEMPLATE_OBJECT:
       newState = {};
-      state.current.flow.terminators.map(function(item,index) {
-        if (item.state.id===action.id) {
-          let updatedState = state.current.flow.terminators[index];
-          updatedState.state[action.key] = action.value;
-          newState = {
-            ...state,
-            current: {
-              ...state.current,
-              flow: {
-                ...state.current.flow,
-                terminators: [
-                  ...state.current.flow.terminators.slice(0, index),
-                  updatedState,
-                  ...state.current.flow.terminators.slice(index+1)
-                ]
-              }
-            }
-          }
-        }
-      });
       state.current.flow.states.map(function(item,index) {
         if (item.state.id===action.id) {
           let updatedState = state.current.flow.states[index];
@@ -336,12 +329,43 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
       });
       return newState;
 
-    case CHANGE_TEMPLATE_TERMINATOR:
+    case CHANGE_TEMPLATE_OBJECT_DATA:
       newState = {};
-      state.current.flow.terminators.map(function(item,index) {
+      state.current.flow.states.some(function(item,index) {
         if (item.state.id===action.id) {
-          let updatedState = state.current.flow.terminators[index];
-          updatedState.state[action.key] = action.value;
+          let updatedState = state.current.flow.states[index];
+          updatedState.data.some( (dataitem, dataindex) => {
+            if (dataitem.name==action.key) {
+              updatedState.state.data[index].globalitem = action.value;
+
+              newState = {
+                ...state,
+                current: {
+                  ...state.current,
+                  flow: {
+                    ...state.current.flow,
+                    states: [
+                      ...state.current.flow.states.slice(0, index),
+                      updatedState,
+                      ...state.current.flow.states.slice(index+1)
+                    ]
+                  }
+                }
+              }
+              return true;
+            }
+          })
+        }
+        return true;
+      });
+      return newState;
+
+    case CHANGE_TEMPLATE_PLACE:
+      newState = {};
+      state.current.flow.places.map(function(item,index) {
+        if (item.place.id===action.id) {
+          let updatedPlace = state.current.flow.places[index];
+          updatedPlace.place[action.key] = action.value;
 
           newState = {
             ...state,
@@ -349,10 +373,10 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
               ...state.current,
               flow: {
                 ...state.current.flow,
-                terminators: [
-                  ...state.current.flow.terminators.slice(0, index),
-                  updatedState,
-                  ...state.current.flow.terminators.slice(index+1)
+                places: [
+                  ...state.current.flow.places.slice(0, index),
+                  updatedPlace,
+                  ...state.current.flow.places.slice(index+1)
                 ]
               }
             }
@@ -368,6 +392,7 @@ function templateReducer( state={current:{},currentState:false,currentid:false},
         if (item.connection.id===action.id) {
           newConn = item.connection;
           newConn.to = action.to;
+          newConn.type = action.ctype;
           newConn.from = action.from;
 
           newState = {
